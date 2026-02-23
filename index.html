@@ -1,1 +1,303 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>LIQUID UNIVERSE SLOT : 祭</title>
 
+<style>
+
+body{
+background:black;
+color:#00f0ff;
+font-family:monospace;
+text-align:center;
+overflow:hidden;
+}
+
+#title{
+font-size:40px;
+animation: glow 0.8s infinite alternate;
+}
+
+@keyframes glow{
+from{ text-shadow:0 0 10px cyan;}
+to{ text-shadow:0 0 40px magenta;}
+}
+
+#credit{
+font-size:20px;
+margin:10px;
+}
+
+#mode{
+color:magenta;
+height:20px;
+}
+
+#slot{
+font-size:70px;
+margin-top:40px;
+letter-spacing:20px;
+}
+
+button{
+font-size:25px;
+padding:10px 40px;
+margin-top:30px;
+background:black;
+color:cyan;
+border:2px solid cyan;
+}
+
+button:hover{
+background:cyan;
+color:black;
+}
+
+.effect{
+position:absolute;
+width:100%;
+pointer-events:none;
+}
+
+#liquid{
+top:40%;
+left:-100%;
+font-size:60px;
+color:magenta;
+white-space:nowrap;
+opacity:0;
+}
+
+#face{
+font-size:120px;
+opacity:0;
+}
+
+#flash{
+position:absolute;
+width:100%;
+height:100%;
+background:white;
+opacity:0;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="title">LIQUID UNIVERSE SLOT : 祭</div>
+
+<div id="credit">CREDIT : 100</div>
+
+<div id="mode"></div>
+
+<div id="slot">黒 き ぬ</div>
+
+<button onclick="spin()">SPIN</button>
+
+<div id="liquid" class="effect">
+LIQUID UNIVERSE ✺ LIQUID UNIVERSE ✺ LIQUID UNIVERSE
+</div>
+
+<div id="face">👤</div>
+
+<div id="flash"></div>
+
+<script>
+
+let credit=100;
+
+let liquidMode=false;
+
+const symbols=["黒","き","ぬ"];
+
+function beep(freq,duration){
+
+let ctx=new AudioContext();
+
+let osc=ctx.createOscillator();
+
+osc.frequency.value=freq;
+
+osc.connect(ctx.destination);
+
+osc.start();
+
+setTimeout(()=>osc.stop(),duration);
+
+}
+
+function update(){
+
+document.getElementById("credit").innerText="CREDIT : "+credit;
+
+document.getElementById("mode").innerText=
+liquidMode ? "LIQUID MODE" : "";
+
+}
+
+function spin(){
+
+if(credit<=0)return;
+
+credit--;
+
+update();
+
+let slot=document.getElementById("slot");
+
+let count=0;
+
+let interval=setInterval(()=>{
+
+let a=r();
+let b=r();
+let c=r();
+
+slot.innerText=a+" "+b+" "+c;
+
+if(a==b || b==c){
+
+reach();
+
+}
+
+count++;
+
+if(count>20){
+
+clearInterval(interval);
+
+result(a,b,c);
+
+}
+
+},80);
+
+}
+
+function r(){
+
+let p=Math.random();
+
+if(liquidMode){
+
+if(p<0.6)return"黒";
+if(p<0.85)return"き";
+return"ぬ";
+
+}else{
+
+if(p<0.4)return"黒";
+if(p<0.7)return"き";
+return"ぬ";
+
+}
+
+}
+
+function reach(){
+
+beep(800,50);
+
+let el=document.getElementById("liquid");
+
+el.style.opacity=1;
+
+let pos=-100;
+
+let move=setInterval(()=>{
+
+pos+=6;
+
+el.style.left=pos+"%";
+
+if(pos>100){
+
+clearInterval(move);
+
+el.style.opacity=0;
+
+}
+
+},16);
+
+}
+
+function result(a,b,c){
+
+if(a==b && b==c){
+
+win();
+
+}else{
+
+lose();
+
+}
+
+}
+
+function win(){
+
+credit+=50;
+
+liquidMode=true;
+
+update();
+
+beep(200,100);
+
+beep(600,200);
+
+face();
+
+flash();
+
+}
+
+function lose(){
+
+beep(100,300);
+
+flash();
+
+}
+
+function face(){
+
+let f=document.getElementById("face");
+
+f.style.opacity=1;
+
+setTimeout(()=>{
+
+f.style.opacity=0;
+
+},2000);
+
+}
+
+function flash(){
+
+let fl=document.getElementById("flash");
+
+fl.style.opacity=1;
+
+setTimeout(()=>{
+
+fl.style.opacity=0;
+
+},200);
+
+}
+
+update();
+
+</script>
+
+</body>
+</html>
