@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>LIQUID UNIVERSE SLOT : 祭</title>
+<style>
+  :root{
+    --cyan:#00f0ff;
+    --gold:#ffd24a;
+    --bg:#000;
+  }
+  body{
+    margin:0;
+    background: radial-gradient(1200px 600px at 50% 0%, #061a22 0%, #000 60%);
+    color:var(--cyan);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    text-align:center;
+    overflow:hidden;
+  }
+
+  /* うっすらCRT */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background:
+      repeating-linear-gradient(to bottom,
+        rgba(255,255,255,0.06) 0px,
+        rgba(255,255,255,0.06) 1px,
+        rgba(0,0,0,0) 3px,
+        rgba(0,0,0,0) 6px
+      );
+    mix-blend-mode: overlay;
+    opacity:.25;
+    pointer-events:none;
+  }
+
+  .wrap{
+    max-width:720px;
+    margin:0 auto;
+    padding:24px 16px 60px;
+  }
+
+  h1{
+    margin:10px 0 6px;
+    letter-spacing:.12em;
+    font-weight:800;
+    text-shadow: 0 0 12px rgba(0,240,255,.35);
+  }
+  .sub{
+    opacity:.7;
+    margin:0 0 18px;
+    font-size:14px;
+  }
+
+  .panel{
+    margin:18px auto 14px;
+    padding:18px 16px 20px;
+    border:1px solid rgba(0,240,255,.35);
+    border-radius:18px;
+    background: linear-gradient(180deg, rgba(0,240,255,.08), rgba(0,0,0,.35));
+    box-shadow: 0 0 36px rgba(0,240,255,.12);
+    position:relative;
+  }
+
+  .stats{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    margin:0 0 14px;
+    font-weight:700;
+  }
+  .stat{
+    flex:1;
+    border:1px solid rgba(255,210,74,.25);
+    border-radius:12px;
+    padding:10px 8px;
+    background: rgba(0,0,0,.35);
+    color:var(--gold);
+    text-shadow: 0 0 10px rgba(255,210,74,.25);
+  }
+  .stat small{ display:block; color:rgba(0,240,255,.65); font-weight:600; margin-bottom:6px; text-shadow:none; }
+
+  .reels{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    margin:8px 0 12px;
+  }
+  .reel{
+    width:150px;
+    height:170px;
+    border-radius:16px;
+    border:2px solid rgba(0,240,255,.5);
+    background: rgba(0,0,0,.65);
+    position:relative;
+    overflow:hidden;
+    box-shadow: inset 0 0 20px rgba(0,240,255,.12);
+  }
+  .windowLine{
+    position:absolute; left:0; right:0; top:50%;
+    height:2px;
+    background: rgba(255,210,74,.6);
+    transform: translateY(-1px);
+    box-shadow: 0 0 18px rgba(255,210,74,.4);
+    pointer-events:none;
+  }
+  .strip{
+    position:absolute; left:0; top:0; width:100%;
+    will-change: transform;
+  }
+  .cell{
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:42px;
+    color:#e7ffff;
+    text-shadow: 0 0 10px rgba(0,240,255,.25);
+    user-select:none;
+  }
+  .cell.null{
+    font-size:34px;
+    letter-spacing:.08em;
+  }
+
+  .controls{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:10px;
+  }
+  .btn{
+    padding:10px 14px;
+    border-radius:12px;
+    border:1px solid rgba(0,240,255,.55);
+    background: rgba(0,0,0,.55);
+    color:var(--cyan);
+    font-weight:800;
+    letter-spacing:.06em;
+    box-shadow: 0 0 18px rgba(0,240,255,.14);
+    cursor:pointer;
+    user-select:none;
+  }
+  .btn:active{ transform: translateY(1px); }
+  .spin{
+    width:min(520px, 92%);
+    margin:14px auto 0;
+    padding:14px 16px;
+    font-size:20px;
+    border-radius:16px;
+    border:1px solid rgba(255,210,74,.45);
+    background: linear-gradient(180deg, rgba(255,210,74,.18), rgba(0,0,0,.65));
+    color: #ffeaa6;
+    text-shadow: 0 0 12px rgba(255,210,74,.35);
+  }
+
+  .msg{
+    min-height:28px;
+    margin:10px 0 0;
+    opacity:.9;
+  }
+
+  /* リーチ帯 */
+  .reach{
+    position:fixed;
+    left:-120%;
+    top:14%;
+    width:140%;
+    height:62px;
+    transform: rotate(-6deg);
+    background: linear-gradient(90deg, transparent 0%, rgba(0,240,255,.0) 10%, rgba(0,240,255,.35) 35%, rgba(255,210,74,.35) 55%, rgba(0,240,255,.35) 75%, rgba(0,240,255,0) 95%, transparent 100%);
+    filter: blur(0.2px);
+    opacity:0;
+    pointer-events:none;
+  }
+  .reach span{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+    letter-spacing:.22em;
+    color:#ffffff;
+    text-shadow: 0 0 18px rgba(0,240,255,.5), 0 0 30px rgba(255,210,74,.35);
+  }
+  .reach.on{
+    opacity:1;
+    animation: sweep 0.9s ease-in-out 1;
+  }
+  @keyframes sweep{
+    0%{ left:-130%; }
+    100%{ left:10%; }
+  }
+
+  /* 勝利/爆発オーバーレイ */
+  .overlay{
+    position:fixed; inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    gap:14px;
+    background: rgba(0,0,0,.75);
+    z-index:50;
+    padding:18px;
+  }
+  .overlay.on{ display:flex; }
+
+  .burst{
+    position:absolute; inset:-20%;
+    background: radial-gradient(circle at 30% 30%, rgba(0,240,255,.25), transparent 55%),
+                radial-gradient(circle at 70% 35%, rgba(255,210,74,.22), transparent 55%),
+                radial-gradient(circle at 50% 70%, rgba(255,0,180,.12), transparent 55%);
+    filter: blur(6px);
+    animation: pulse 0.9s ease-in-out infinite alternate;
+  }
+  @keyframes pulse{ from{ transform:scale(1); opacity:.8;} to{ transform:scale(1.07); opacity:1;} }
+
+  .face{
+    width:min(280px, 75vw);
+    height:auto;
+    border-radius:18px;
+    border:1px solid rgba(255,210,74,.6);
+    box-shadow: 0 0 40px rgba(255,210,74,.25), 0 0 22px rgba(0,240,255,.18);
+    background:#111;
+  }
+
+  .big{
+    font-size:34px;
+    font-weight:1000;
+    color:#ffeaa6;
+    text-shadow: 0 0 22px rgba(255,210,74,.45);
+  }
+
+  .close{
+    padding:10px 14px;
+    border-radius:12px;
+    border:1px solid rgba(0,240,255,.55);
+    background: rgba(0,0,0,.55);
+    color:var(--cyan);
+    font-weight:900;
+    cursor:pointer;
+  }
+
+  /* ゲームオーバー液体 */
+  .goo{
+    position:fixed;
+    left:0; top:-120%;
+    width:100%;
+    height:120%;
+    background: linear-gradient(180deg,
+      rgba(0,240,255,.0) 0%,
+      rgba(0,240,255,.22) 35%,
+      rgba(255,210,74,.22) 55%,
+      rgba(0,240,255,.22) 75%,
+      rgba(0,0,0,.0) 100%);
+    filter: blur(2px);
+    pointer-events:none;
+    z-index:60;
+    opacity:0;
+  }
+  .goo.on{
+    opacity:1;
+    animation: drip 1.1s ease-in forwards;
+  }
+  @keyframes drip{
+    0%{ top:-120%; }
+    80%{ top:-10%; }
+    100%{ top:0%; }
+  }
+
+  .flash{
+    position:fixed; inset:0;
+    background: #fff;
+    opacity:0;
+    pointer-events:none;
+    z-index:70;
+  }
+  .flash.on{
+    animation: flash 0.35s ease-out 1;
+  }
+  @keyframes flash{
+    0%{ opacity:0; }
+    25%{ opacity:.9; }
+    100%{ opacity:0; }
+  }
+</style>
+</head>
+<body>
+<div class="reach" id="reach"><span>LIQUID&nbsp;UNIVERSE</span></div>
+<div class="goo" id="goo"></div>
+<div class="flash" id="flash"></div>
+
+<div class="wrap">
+  <h1>LIQUID UNIVERSE SLOT : 祭</h1>
+  <div class="sub">🐈‍⬛ / 🍄 / ヌル — 量子の海へ飛び込め</div>
+
+  <div class="panel">
+    <div class="stats">
+      <div class="stat"><small>CREDIT</small><span id="credit">100</span></div>
+      <div class="stat"><small>WIN</small><span id="win">0</span></div>
+      <div class="stat"><small>SPINS</small><span id="spins">0</span></div>
+    </div>
+
+    <div class="reels">
+      <div class="reel"><div class="strip" id="strip1"></div><div class="windowLine"></div></div>
+      <div class="reel"><div class="strip" id="strip2"></div><div class="windowLine"></div></div>
+      <div class="reel"><div class="strip" id="strip3"></div><div class="windowLine"></div></div>
+    </div>
+
+    <div class="controls">
+      <div class="btn" onclick="setBet(1)">BET 1</div>
+      <div class="btn" onclick="setBet(3)">BET 3</div>
+      <div class="btn" onclick="setBet(5)">BET 5</div>
+      <div class="btn" onclick="setBet(10)">BET 10</div>
+    </div>
+
+    <button class="spin" id="spinBtn">▶ SPIN</button>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="burst"></div>
+  <div class="big" id="overlayTitle">JACKPOT!</div>
+  <img class="face" id="face" src="yoichi.jpg" alt="face" />
+  <button class="close" onclick="closeOverlay()">OK</button>
+</div>
+
+<script>
+  // ======= 触らなくてOK（ここから下は全部“完成済み”） =======
+
+  const SYMBOLS = [
+    { key:"cat",  label:"🐈‍⬛" },
+    { key:"mush", label:"🍄" },
+    { key:"null", label:"ヌル", cls:"null" }
+  ];
+
+  const stripEls = [
+    document.getElementById("strip1"),
+    document.getElementById("strip2"),
+    document.getElementById("strip3")
+  ];
+
+  const creditEl = document.getElementById("credit");
+  const winEl    = document.getElementById("win");
+  const spinsEl  = document.getElementById("spins");
+  const msgEl    = document.getElementById("msg");
+  const spinBtn  = document.getElementById("spinBtn");
+
+  const reachEl  = document.getElementById("reach");
+  const overlay  = document.getElementById("overlay");
+  const overlayTitle = document.getElementById("overlayTitle");
+  const gooEl    = document.getElementById("goo");
+  const flashEl  = document.getElementById("flash");
+  const faceImg  = document.getElementById("face");
+
+  let credit = 100;
+  let totalWin = 0;
+  let spins = 0;
+  let bet = 1;
+  let spinning = false;
+
+  function renderStats(){
+    creditEl.textContent = credit;
+    winEl.textContent = totalWin;
+    spinsEl.textContent = spins;
+  }
+
+  function setBet(n){
+    bet = n;
+    msgEl.textContent = `BET: ${bet}`;
+  }
+
+  function buildStrip(el){
+    // 縦に流れる“帯”を作る（見た目の回転用）
+    // たくさん並べてスクロールさせる
+    el.innerHTML = "";
+    const items = [];
+    for(let i=0;i<24;i++){
+      const s = SYMBOLS[i % SYMBOLS.length];
+      const d = document.createElement("div");
+      d.className = "cell " + (s.cls || "");
+      d.textContent = s.label;
+      items.push(d);
+      el.appendChild(d);
+    }
+    return items;
+  }
+
+  stripEls.forEach(buildStrip);
+
+  function pick(){
+    // ここで“抽選”してる（当たり確率いじるならここ）
+    // 例：ヌルを少し出にくくするとか
+    const r = Math.random();
+    if(r < 0.42) return SYMBOLS[0]; // 🐈‍⬛
+    if(r < 0.84) return SYMBOLS[1]; // 🍄
+    return SYMBOLS[2];              // ヌル
+  }
+
+  function reach(){
+    reachEl.classList.remove("on");
+    void reachEl.offsetWidth;
+    reachEl.classList.add("on");
+    setTimeout(()=>reachEl.classList.remove("on"), 950);
+  }
+
+  function flash(){
+    flashEl.classList.remove("on");
+    void flashEl.offsetWidth;
+    flashEl.classList.add("on");
+    setTimeout(()=>flashEl.classList.remove("on"), 380);
+  }
+
+  function gameOver(){
+    msgEl.textContent = "GAME OVER… 液体が世界を覆う…";
+    gooEl.classList.add("on");
+    setTimeout(()=> flash(), 900);
+    setTimeout(()=> gooEl.classList.remove("on"), 1400);
+  }
+
+  function openOverlay(title){
+    overlayTitle.textContent = title;
+    overlay.classList.add("on");
+  }
+  function closeOverlay(){
+    overlay.classList.remove("on");
+  }
+
+  function animateReel(el, stopSymbol, duration){
+    return new Promise(resolve=>{
+      const start = performance.now();
+      const speed = 0.9 + Math.random() * 0.6;
+
+      function frame(t){
+        const p = Math.min(1, (t - start) / duration);
+        // easeOut
+        const e = 1 - Math.pow(1-p, 3);
+
+        const y = - (e * 56 * 9 * speed); // 56px * 9 くらい回す
+        el.style.transform = `translateY(${y}px)`;
+
+        if(p < 1){
+          requestAnimationFrame(frame);
+        }else{
+          // 止めた見た目を “中央ライン”に合わせる：3つだけ表示に切替
+          el.style.transform = "translateY(0px)";
+          el.innerHTML = "";
+          const above = document.createElement("div");
+          above.className = "cell " + (stopSymbol.cls || "");
+          above.style.opacity = ".55";
+          above.textContent = stopSymbol.label;
+
+          const center = document.createElement("div");
+          center.className = "cell " + (stopSymbol.cls || "");
+          center.style.fontSize = stopSymbol.cls ? "34px" : "44px";
+          center.style.textShadow = "0 0 16px rgba(255,210,74,.25), 0 0 18px rgba(0,240,255,.25)";
+          center.textContent = stopSymbol.label;
+
+          const below = document.createElement("div");
+          below.className = "cell " + (stopSymbol.cls || "");
+          below.style.opacity = ".55";
+          below.textContent = stopSymbol.label;
+
+          el.appendChild(above);
+          el.appendChild(center);
+          el.appendChild(below);
+
+          resolve(stopSymbol);
+        }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  function payout(sym){
+    // 同じ3つが揃ったら当たり
+    // “ヌル”は一番ヤバい当たりにする
+    if(sym.key === "cat")  return 10 * bet;
+    if(sym.key === "mush") return 8 * bet;
+    if(sym.key === "null") return 30 * bet;
+    return 0;
+  }
+
+  async function spin(){
+    if(spinning) return;
+    if(credit <= 0){
+      gameOver();
+      return;
+    }
+    if(credit < bet){
+      msgEl.textContent = "CREDIT不足！BETを下げてね";
+      return;
+    }
+
+    spinning = true;
+    spinBtn.disabled = true;
+    msgEl.textContent = "SPIN…";
+
+    credit -= bet;
+    spins += 1;
+    renderStats();
+
+    // リーチ演出（たまに）
+    const willReach = Math.random() < 0.35;
+    if(willReach) reach();
+
+    // 抽選（止まる絵を決める）
+    const s1 = pick();
+    const s2 = pick();
+    const s3 = pick();
+
+    // 見た目の回転
+    const p1 = animateReel(stripEls[0], s1, 850);
+    const p2 = animateReel(stripEls[1], s2, 1050);
+    const p3 = animateReel(stripEls[2], s3, 1250);
+
+    const r = await Promise.all([p1,p2,p3]);
+
+    // 当たり判定（ここが“当たり判定”の本体）
+    const isWin = (r[0].key === r[1].key && r[1].key === r[2].key);
+
+    if(isWin){
+      const gain = payout(r[0]);
+      totalWin += gain;
+      credit += gain;
+      renderStats();
+
+      flash();
+
+      // 顔画像が無い/読めない時は消す（404対策）
+      faceImg.onerror = ()=>{ faceImg.style.display="none"; };
+
+      if(r[0].key === "null"){
+        openOverlay(`ヌル揃い！！！ +${gain}`);
+        msgEl.textContent = "ヌルが揃った。世界が書き換わる。";
+      }else{
+        openOverlay(`大当たり！ +${gain}`);
+        msgEl.textContent = "揃った！";
+      }
+    }else{
+      msgEl.textContent = "…惜しい。";
+      if(credit <= 0) gameOver();
+    }
+
+    spinning = false;
+    spinBtn.disabled = false;
+  }
+
+  spinBtn.addEventListener("click", spin);
+  renderStats();
+  msgEl.textContent = "BETを選んでSPIN！";
+</script>
+</body>
+</html>
